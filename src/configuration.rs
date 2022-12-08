@@ -25,10 +25,17 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
 }
 
 impl DatabaseSettings {
-    pub fn connection_string(self) -> String {
+    pub fn connection_string(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",
             self.username,self.password,self.host,self.port, self.database_name,
         )
     }
+    pub fn connection_string_no_db(&self) -> String {
+        format!(
+            "postgres://{}:{}@{}:{}",
+            self.username,self.password,self.host,self.port,
+        )
+    }
+
 }
