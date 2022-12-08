@@ -1,2 +1,2 @@
 ### Status
-Pick back up with **section 3.8.5.2.2 on page 66
+Pick back up with **section 3.8.5.4 on page 70

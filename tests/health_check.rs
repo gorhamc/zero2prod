@@ -3,6 +3,8 @@
 
 use std::net::TcpListener;
 use zero2prod::startup::run;
+use sqlx::{PgConnection,Connection};
+use zero2prod::configuration::get_configuration;
 
 #[tokio::test]
 async fn health_check_works() {
@@ -30,8 +32,13 @@ fn spawn_app() -> String {
 #[tokio::test]
 async  fn subscribe_returns_a_200_for_valid_form_data() {
     let address = spawn_app();
-    let client = reqwest::Client::new();
+    let configuration = get_configuration().expect("should read config");
+    let connection_string = configuration.database.connection_string();
+    let connection = PgConnection::connect(&connection_string)
+        .await
+        .expect("should connect to db");
 
+    let client = reqwest::Client::new();
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
     let response = client
         .post(format!("http://{address}/subscriptions"))
