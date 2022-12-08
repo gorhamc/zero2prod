@@ -1,12 +1,12 @@
 //! tests/health_check.rs
 //!
 
+use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
-use zero2prod::startup::run;
-use sqlx::{PgPool, PgConnection, Connection, Executor};
+use uuid::Uuid;
 use zero2prod::configuration::get_configuration;
 use zero2prod::configuration::DatabaseSettings;
-use uuid::Uuid;
+use zero2prod::startup::run;
 
 pub struct TestApp {
     pub address: String,
@@ -19,7 +19,7 @@ async fn health_check_works() {
     let client = reqwest::Client::new();
 
     let response = client
-        .get(format!("http://{}/health_check",test_app.address))
+        .get(format!("http://{}/health_check", test_app.address))
         .send()
         .await
         .expect("failed to execute request");
@@ -33,11 +33,11 @@ async fn spawn_app() -> TestApp {
     let port = listener.local_addr().unwrap().port();
     let mut configuration = get_configuration().expect("should read configuration");
     configuration.database.database_name = Uuid::new_v4().to_string();
-    
+
     let connection_pool = configure_database(&configuration.database).await;
     let server = run(listener, connection_pool.clone()).expect("failed to bind address");
     let _ = tokio::spawn(server);
-    TestApp{
+    TestApp {
         address: format!("127.0.0.1:{}", port),
         db_pool: connection_pool,
     }
@@ -46,12 +46,12 @@ async fn spawn_app() -> TestApp {
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     let app = spawn_app().await;
-    
+
     let client = reqwest::Client::new();
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
     let response = client
-        .post(format!("http://{}/subscriptions",app.address))
-        .header("Content-Type","application/x-www-form-urlencoded")
+        .post(format!("http://{}/subscriptions", app.address))
+        .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
         .await
@@ -68,14 +68,12 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 }
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
-    let mut connection = PgConnection::connect(
-        &config.connection_string_no_db()
-        )
+    let mut connection = PgConnection::connect(&config.connection_string_no_db())
         .await
         .expect("failed to connect to db");
-    
+
     connection
-        .execute(format!(r#"CREATE DATABASE "{}";"#,config.database_name).as_str())
+        .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
         .await
         .expect("failed to create db");
     let connection_pool = PgPool::connect(&config.connection_string())
@@ -87,31 +85,32 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .expect("failed to run migrations");
 
     connection_pool
-
 }
 
 #[tokio::test]
-async  fn subscribe_returns_a_400_when_data_is_missing() {
+async fn subscribe_returns_a_400_when_data_is_missing() {
     let app = spawn_app().await;
     let client = reqwest::Client::new();
 
-    let test_cases= vec![
-    ("name=le%guin","missing the email"),
-    ("email=ursula_le_guin%40gmail.com", "missing name"),
-    ("","missing both name and email")
+    let test_cases = vec![
+        ("name=le%guin", "missing the email"),
+        ("email=ursula_le_guin%40gmail.com", "missing name"),
+        ("", "missing both name and email"),
     ];
     for (invalid_body, error_message) in test_cases {
-    let response = client
-        .post(format!("http://{}/subscriptions",app.address))
-        .header("Content-Type","application/x-www-form-urlencoded")
-        .body(invalid_body)
-        .send()
-        .await
-        .expect("failed to execute request");
+        let response = client
+            .post(format!("http://{}/subscriptions", app.address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(invalid_body)
+            .send()
+            .await
+            .expect("failed to execute request");
 
-    assert_eq!(400, response.status().as_u16(), "The API did not fail with 400 Bad Request when the payload was {}.",error_message);
-
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API did not fail with 400 Bad Request when the payload was {}.",
+            error_message
+        );
     }
 }
-
-
