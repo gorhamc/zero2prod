@@ -1,2 +1,2 @@
 ### Status
-Pick back up with **Chapter 4 on page 89
+Pick back up with section 4.5.10 page 114
