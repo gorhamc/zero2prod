@@ -64,7 +64,7 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     // Init config reader
     let settings = config::Config::builder()
         .add_source(config::File::from(config_dir.join("base.yaml")))
-        .add_source(config::File::from(config_dir.join(&environment_filename)))
+        .add_source(config::File::from(config_dir.join(environment_filename)))
         .build()?;
     settings.try_deserialize::<Settings>()
 }
