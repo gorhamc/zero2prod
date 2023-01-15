@@ -15,14 +15,14 @@ pub struct ApplicationSettings {
 
 pub enum Environment {
     Local,
-    Production
+    Production,
 }
 
 impl Environment {
     pub fn as_str(&self) -> &'static str {
         match self {
             Environment::Local => "local",
-            Environment::Production => "production"
+            Environment::Production => "production",
         }
     }
 }
@@ -30,11 +30,14 @@ impl Environment {
 impl TryFrom<String> for Environment {
     type Error = String;
 
-    fn  try_from(s: String) -> Result<Self, Self::Error> {
+    fn try_from(s: String) -> Result<Self, Self::Error> {
         match s.to_lowercase().as_str() {
             "local" => Ok(Self::Local),
             "production" => Ok(Self::Production),
-            other => Err(format!("{} is not a supported env. Use local or produciton", other))
+            other => Err(format!(
+                "{} is not a supported env. Use local or produciton",
+                other
+            )),
         }
     }
 }
@@ -60,12 +63,8 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     let environment_filename = format!("{}.yaml", environment.as_str());
     // Init config reader
     let settings = config::Config::builder()
-        .add_source(config::File::from(
-            config_dir.join("base.yaml")
-        ))
-        .add_source(config::File::from(
-                config_dir.join(&environment_filename)
-        ))
+        .add_source(config::File::from(config_dir.join("base.yaml")))
+        .add_source(config::File::from(config_dir.join(&environment_filename)))
         .build()?;
     settings.try_deserialize::<Settings>()
 }
