@@ -3,6 +3,8 @@ use chrono::Utc;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::domain::{NewSubscriber, SubscriberName};
+
 #[derive(serde::Deserialize)]
 pub struct FormData {
     name: String,
@@ -26,7 +28,7 @@ pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Ht
 }
 
 #[tracing::instrument(name = "Saving new subscriber", skip(form, pool))]
-pub async fn insert_subscriber(form: &FormData, pool: &PgPool) -> Result<(), sqlx::Error> {
+pub async fn insert_subscriber(form: &NewSubscriber, pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at)
